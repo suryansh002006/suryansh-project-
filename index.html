@@ -1,1 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VoiceUp — Anonymous Complaint Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --bg: #0d0d12;
+    --surface: #16161f;
+    --surface2: #1e1e2a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --accent: #ff4e4e;
+    --accent2: #ff8a4e;
+    --text: #f0f0f5;
+    --muted: #8e8ea8;
+    --muted2: #5c5c78;
+    --tag-bg: rgba(255,78,78,0.12);
+    --tag-color: #ff8a8a;
+    --green: #3ecf8e;
+    --green-bg: rgba(62,207,142,0.1);
+    --yellow: #fbbf24;
+    --yellow-bg: rgba(251,191,36,0.1);
+    --vote-bg: rgba(255,78,78,0.08);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,13,18,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem; font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .logo span { -webkit-text-fill-color: var(--text); }
+  .nav-links { display: flex; gap: 1rem; align-items: center; }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none; outline: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; font-weight: 500;
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    max-width: 700px; margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+    font-size: 0.75rem; font-weight: 500;
+    padding: 4px 12px; border-radius: 100px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255,78,78,0.2);
+  }
+  .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+    margin-bottom: 1rem;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p { color: var(--muted); font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem; }
+  .hero-stats {
+    display: flex; justify-content: center; gap: 2.5rem;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 2rem;
+  }
+  .stat { text-align: center; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--text); }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+  /* LAYOUT */
+  .layout {
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 2rem 4rem;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* SIDEBAR */
+  .sidebar { position: sticky; top: 80px; }
+  .sidebar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .sidebar-title {
+    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .category-list { list-style: none; }
+  .category-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+  }
+  .category-item:hover, .category-item.active { background: var(--surface2); }
+  .category-item .cat-icon { margin-right: 8px; font-size: 14px; }
+  .category-item .cat-count {
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 0.7rem; padding: 2px 7px; border-radius: 100px;
+  }
+  .category-item.active .cat-count { background: var(--tag-bg); color: var(--tag-color); }
+
+  /* TOP ISSUES */
+  .top-issues-list { list-style: none; }
+  .top-issue { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .top-issue:last-child { border-bottom: none; }
+  .top-issue-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
+  .top-issue-meta { font-size: 0.72rem; color: var(--muted); display: flex; gap: 8px; }
+  .trending-bar {
+    height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    margin-top: 6px;
+  }
+
+  /* MAIN FEED */
+  .feed-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .feed-header h2 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+  .sort-tabs { display: flex; gap: 4px; }
+  .sort-tab {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+    padding: 5px 12px; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .sort-tab:hover { border-color: var(--border2); color: var(--text); }
+  .sort-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* COMPLAINT CARD */
+  .complaint-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .complaint-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .complaint-card.expanded { border-color: rgba(255,78,78,0.3); }
+  .card-image {
+    width: 100%; height: 200px; object-fit: cover;
+    display: block;
+    background: var(--surface2);
+  }
+  .card-img-placeholder {
+    width: 100%; height: 160px;
+    background: linear-gradient(135deg, var(--surface2) 0%, var(--bg) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+  }
+  .card-body { padding: 1.25rem; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    background: var(--tag-bg); color: var(--tag-color);
+    font-size: 0.7rem; font-weight: 500;
+    padding: 3px 9px; border-radius: 100px;
+    border: 1px solid rgba(255,78,78,0.15);
+  }
+  .tag.urgent { background: rgba(251,191,36,0.12); color: var(--yellow); border-color: rgba(251,191,36,0.2); }
+  .tag.resolved { background: var(--green-bg); color: var(--green); border-color: rgba(62,207,142,0.2); }
+  .card-time { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; line-height: 1.4; }
+  .card-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.65; margin-bottom: 1rem; }
+  .card-location {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; color: var(--muted);
+    margin-bottom: 1rem;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .card-location svg { flex-shrink: 0; }
+  .card-footer { display: flex; align-items: center; gap: 1rem; }
+  .vote-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--vote-bg); border: 1px solid rgba(255,78,78,0.2);
+    color: var(--text); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+    padding: 6px 14px; border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .vote-btn:hover { background: rgba(255,78,78,0.18); border-color: var(--accent); }
+  .vote-btn.voted { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .vote-count { font-weight: 700; font-size: 1rem; }
+  .comment-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+    padding: 6px 12px; border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .comment-btn:hover { border-color: var(--border2); color: var(--text); }
+  .share-btn {
+    margin-left: auto;
+    background: transparent; border: none;
+    color: var(--muted); cursor: pointer;
+    padding: 6px; border-radius: 6px;
+    transition: color 0.15s;
+  }
+  .share-btn:hover { color: var(--text); }
+  .opinion-bar-wrap { margin: 0.75rem 0; }
+  .opinion-bar-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .opinion-bar { height: 5px; border-radius: 3px; background: var(--surface2); overflow: hidden; }
+  .opinion-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.4s ease; }
+  .similar-count {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; color: var(--muted);
+    padding: 8px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+  }
+  .avatar-stack { display: flex; }
+  .avatar {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface);
+    border: 1.5px solid var(--surface);
+    margin-left: -6px; font-size: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+  }
+  .avatar:first-child { margin-left: 0; }
+
+  /* COMMENTS */
+  .comments-section { border-top: 1px solid var(--border); padding: 1rem 1.25rem; display: none; }
+  .complaint-card.expanded .comments-section { display: block; }
+  .comment-input-wrap { display: flex; gap: 10px; margin-bottom: 1rem; }
+  .comment-input {
+    flex: 1; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    padding: 8px 12px; outline: none; resize: none;
+    transition: border-color 0.15s;
+  }
+  .comment-input:focus { border-color: var(--border2); }
+  .comment-send {
+    background: var(--accent); border: none; color: #fff;
+    border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem;
+    transition: opacity 0.15s;
+  }
+  .comment-send:hover { opacity: 0.85; }
+  .comment { display: flex; gap: 10px; margin-bottom: 10px; }
+  .comment-avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--muted);
+  }
+  .comment-text { font-size: 0.85rem; line-height: 1.6; }
+  .comment-text strong { color: var(--tag-color); font-size: 0.75rem; font-weight: 500; }
+
+  /* MAP */
+  .mini-map {
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border);
+    height: 130px; position: relative;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+  }
+  .mini-map-inner { width: 100%; height: 100%; }
+  .map-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(13,13,18,0.5);
+    font-size: 0.8rem; color: var(--text);
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  /* MODAL / SUBMIT FORM */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    width: min(560px, 95vw);
+    max-height: 90vh; overflow-y: auto;
+    padding: 2rem;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+  .modal-close { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 1.3rem; padding: 4px; border-radius: 6px; }
+  .modal-close:hover { color: var(--text); }
+  .anon-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--green-bg); color: var(--green);
+    border: 1px solid rgba(62,207,142,0.2);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 0.83rem; margin-bottom: 1.5rem;
+  }
+  .form-group { margin-bottom: 1.2rem; }
+  .form-label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    padding: 10px 12px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 100px; }
+  .form-select { appearance: none; cursor: pointer; }
+  .form-select option { background: var(--surface2); }
+  .upload-area {
+    border: 1.5px dashed var(--border2); border-radius: 10px;
+    padding: 1.5rem; text-align: center; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .upload-area:hover { border-color: var(--accent); background: var(--tag-bg); }
+  .upload-area input { display: none; }
+  .upload-icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .upload-text { font-size: 0.83rem; color: var(--muted); }
+  .upload-text strong { color: var(--accent); }
+  .location-row { display: flex; gap: 10px; }
+  .location-row .form-input { flex: 1; }
+  .detect-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+    padding: 10px 12px; border-radius: 8px;
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .detect-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .preview-image { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+    background: var(--surface);
+    border: 1px solid var(--green);
+    border-radius: 10px; padding: 12px 18px;
+    font-size: 0.88rem; color: var(--green);
+    display: flex; align-items: center; gap: 8px;
+    transform: translateY(20px); opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* MAP FULL */
+  .map-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .map-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .map-card-header h3 { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 600; }
+  .map-container { height: 250px; position: relative; }
+  #live-map { width: 100%; height: 100%; border: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .hero-stats { gap: 1.5rem; }
+    nav { padding: 0 1rem; }
+    .hero { padding: 2.5rem 1rem 2rem; }
+    .layout { padding: 0 1rem 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Voice<span>Up</span></div>
+  <div class="nav-links">
+    <button class="btn-secondary" onclick="openModal()">+ File Complaint</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span class="dot"></span> 100% Anonymous · Verified Complaints</div>
+  <h1>Your voice, <em>amplified.</em><br>Your identity, protected.</h1>
+  <p>Report civic issues, workplace problems, or public concerns anonymously. Join others with the same complaint to build collective opinion that drives action.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-val" id="total-complaints">1,248</div>
+      <div class="stat-label">Total Complaints</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">89</div>
+      <div class="stat-label">Resolved Issues</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">42K</div>
+      <div class="stat-label">Anonymous Voices</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">63</div>
+      <div class="stat-label">Locations Covered</div>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="openModal()" style="font-size:1rem; padding: 0.7rem 2rem; border-radius:10px;">
+    File a Complaint →
+  </button>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">Browse by Category</div>
+      <ul class="category-list">
+        <li class="category-item active" onclick="filterCat('all',this)"><span class="cat-icon">🗂</span>All Issues <span class="cat-count">48</span></li>
+        <li class="category-item" onclick="filterCat('roads',this)"><span class="cat-icon">🛣</span>Roads & Transport <span class="cat-count">12</span></li>
+        <li class="category-item" onclick="filterCat('sanitation',this)"><span class="cat-icon">🗑</span>Sanitation <span class="cat-count">9</span></li>
+        <li class="category-item" onclick="filterCat('corruption',this)"><span class="cat-icon">⚖</span>Corruption <span class="cat-count">7</span></li>
+        <li class="category-item" onclick="filterCat('utilities',this)"><span class="cat-icon">💡</span>Utilities <span class="cat-count">8</span></li>
+        <li class="category-item" onclick="filterCat('public-safety',this)"><span class="cat-icon">🚨</span>Public Safety <span class="cat-count">6</span></li>
+        <li class="category-item" onclick="filterCat('environment',this)"><span class="cat-icon">🌿</span>Environment <span class="cat-count">6</span></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="sidebar-title">Trending Issues</div>
+      <ul class="top-issues-list">
+        <li class="top-issue">
+          <div class="top-issue-title">Broken streetlights on NH-58</div>
+          <div class="top-issue-meta"><span>🔥 324 supporters</span><span>Roads</span></div>
+          <div class="trending-bar" style="width:90%"></div>
+        </li>
+        <li class="top-issue">
+          <div class="top-issue-title">Garbage not collected for 2 weeks</div>
+          <div class="top-issue-meta"><span>🔥 218 supporters</span><span>Sanitation</span></div>
+          <div class="trending-bar" style="width:62%"></div>
+        </li>
+        <li class="top-issue">
+          <div class="top-issue-title">Water supply disrupted – Sector 12</div>
+          <div class="top-issue-meta"><span>🔥 197 supporters</span><span>Utilities</span></div>
+          <div class="trending-bar" style="width:55%"></div>
+        </li>
+        <li class="top-issue">
+          <div class="top-issue-title">Bribery at local RTO office</div>
+          <div class="top-issue-meta"><span>🔥 153 supporters</span><span>Corruption</span></div>
+          <div class="trending-bar" style="width:44%"></div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="map-card">
+      <div class="map-card-header">
+        <h3>📍 Complaint Map</h3>
+        <span style="font-size:0.72rem;color:var(--muted)">Live</span>
+      </div>
+      <div class="map-container">
+        <iframe id="live-map"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=77.4,28.4,77.7,28.7&layer=mapnik&marker=28.5355,77.3910"
+          allowfullscreen loading="lazy"
+          style="filter: invert(0.9) hue-rotate(180deg) brightness(0.85);">
+        </iframe>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FEED -->
+  <main>
+    <div class="feed-header">
+      <h2>Recent Complaints</h2>
+      <div class="sort-tabs">
+        <button class="sort-tab active" onclick="sortFeed('hot',this)">🔥 Hot</button>
+        <button class="sort-tab" onclick="sortFeed('new',this)">✨ New</button>
+        <button class="sort-tab" onclick="sortFeed('top',this)">📈 Top</button>
+      </div>
+    </div>
+
+    <div id="complaint-feed">
+      <!-- Cards injected by JS -->
+    </div>
+  </main>
+</div>
+
+<!-- SUBMIT MODAL -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">File Anonymous Complaint</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="anon-badge">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      Your identity is never stored or shared. We use zero-knowledge anonymization.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Complaint Title *</label>
+      <input class="form-input" id="f-title" type="text" placeholder="Brief description of the issue" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Category *</label>
+      <select class="form-select" id="f-cat">
+        <option value="">Select category…</option>
+        <option>Roads & Transport</option>
+        <option>Sanitation</option>
+        <option>Corruption</option>
+        <option>Utilities</option>
+        <option>Public Safety</option>
+        <option>Environment</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Detailed Description *</label>
+      <textarea class="form-textarea" id="f-desc" placeholder="Describe the issue in detail. Be specific about what's wrong, how long it's been happening, and who's affected."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Location *</label>
+      <div class="location-row">
+        <input class="form-input" id="f-loc" type="text" placeholder="Area, Street, Landmark" />
+        <button class="detect-btn" onclick="detectLocation()">📍 Detect</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Upload Photo / Evidence</label>
+      <label class="upload-area" for="f-img">
+        <input type="file" id="f-img" accept="image/*" onchange="previewImg(event)" />
+        <div class="upload-icon">📷</div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br>JPG, PNG, WEBP up to 10MB</div>
+      </label>
+      <img class="preview-image" id="img-preview" alt="Preview" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Urgency</label>
+      <select class="form-select" id="f-urgency">
+        <option value="normal">Normal</option>
+        <option value="urgent">Urgent</option>
+        <option value="critical">Critical — Immediate Danger</option>
+      </select>
+    </div>
+
+    <button class="btn-primary" style="width:100%;padding:0.75rem;font-size:1rem;border-radius:10px;" onclick="submitComplaint()">
+      Submit Anonymously →
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Complaint filed anonymously. Your identity is protected.</div>
+
+<script>
+const complaints = [
+  {
+    id: 1,
+    title: "Broken Streetlights Creating Safety Hazard — NH-58 Extension",
+    desc: "Over 14 streetlights on the NH-58 stretch near the flyover have been non-functional for over 3 weeks. This has led to multiple road accidents at night. Residents have complained multiple times but no action taken.",
+    category: "Roads & Transport",
+    tags: ["roads", "public-safety"],
+    location: "NH-58, Sector 10, Greater Noida, UP",
+    lat: 28.4744, lng: 77.5030,
+    votes: 324,
+    comments: 47,
+    supporters: 89,
+    time: "2h ago",
+    urgency: "urgent",
+    image: null,
+    emoji: "🌃",
+    voted: false,
+    commentsList: [
+      "This is genuinely scary at night. Two-wheelers are at risk.",
+      "I've reported this 4 times on the GNIDA portal. No response.",
+      "Same issue in Sector 12 too. Is it a substation fault?"
+    ]
+  },
+  {
+    id: 2,
+    title: "Garbage Not Collected for 15 Days — Colony Turning Into Dump",
+    desc: "Residential area garbage has not been collected for 15 days. Mounds of waste outside homes are causing health hazards, especially for children and elderly. Stray animals scatter garbage everywhere.",
+    category: "Sanitation",
+    tags: ["sanitation"],
+    location: "Block D, Gamma 2, Greater Noida, UP",
+    lat: 28.4736, lng: 77.5040,
+    votes: 218,
+    comments: 31,
+    supporters: 62,
+    time: "5h ago",
+    urgency: "urgent",
+    image: null,
+    emoji: "🗑",
+    voted: false,
+    commentsList: [
+      "Completely agree. The smell is unbearable.",
+      "Kids are falling sick. Someone take action.",
+    ]
+  },
+  {
+    id: 3,
+    title: "Pothole-Ridden Road Causes Daily Accidents Near School",
+    desc: "The road outside Government Primary School, Sector 4 has massive potholes. Multiple school children have fallen from bicycles. Heavy rains have made this worse and no repair work is being done.",
+    category: "Roads & Transport",
+    tags: ["roads", "urgent"],
+    location: "Sector 4 School Road, Greater Noida, UP",
+    lat: 28.4880, lng: 77.5090,
+    votes: 197,
+    comments: 22,
+    supporters: 54,
+    time: "1d ago",
+    urgency: "normal",
+    image: null,
+    emoji: "🕳",
+    voted: false,
+    commentsList: [
+      "My child fell here last month. Fractured wrist.",
+      "This road is used by over 500 kids daily."
+    ]
+  },
+  {
+    id: 4,
+    title: "Bribery Being Demanded for Basic Certificate at RTO Office",
+    desc: "Officials at the local RTO office are openly demanding ₹2,000–₹5,000 for vehicle registration and fitness certificates that should be free. Multiple residents have faced this. Middlemen openly sitting inside.",
+    category: "Corruption",
+    tags: ["corruption"],
+    location: "RTO Office, Surajpur, Greater Noida, UP",
+    lat: 28.5500, lng: 77.4700,
+    votes: 153,
+    comments: 19,
+    supporters: 41,
+    time: "2d ago",
+    urgency: "normal",
+    image: null,
+    emoji: "⚖",
+    voted: false,
+    commentsList: [
+      "I was asked for ₹3,000 just for a NOC. Shame.",
+      "This needs to go to the Chief Minister's office."
+    ]
+  },
+  {
+    id: 5,
+    title: "Water Supply Disrupted for 5 Days — No Communication from Authority",
+    desc: "Residents of Sector 12 have been without piped water supply for 5 consecutive days. No notice or communication from the Jal Nigam. People are buying tanker water at inflated prices.",
+    category: "Utilities",
+    tags: ["utilities"],
+    location: "Sector 12, Greater Noida, UP",
+    lat: 28.4600, lng: 77.4800,
+    votes: 141,
+    comments: 28,
+    supporters: 37,
+    time: "3d ago",
+    urgency: "urgent",
+    image: null,
+    emoji: "💧",
+    voted: false,
+    commentsList: [
+      "5 days! Disgraceful. We're paying our water tax.",
+    ]
+  },
+];
+
+let activeFilter = 'all';
+let sortMode = 'hot';
+
+function renderFeed() {
+  const feed = document.getElementById('complaint-feed');
+  let data = [...complaints];
+  if (activeFilter !== 'all') {
+    data = data.filter(c => c.tags.includes(activeFilter));
+  }
+  if (sortMode === 'hot') data.sort((a,b) => b.votes - a.votes);
+  else if (sortMode === 'new') data.sort((a,b) => a.id > b.id ? -1 : 1);
+  else if (sortMode === 'top') data.sort((a,b) => b.supporters - a.supporters);
+
+  feed.innerHTML = data.map(c => cardHTML(c)).join('');
+}
+
+function cardHTML(c) {
+  const urgTag = c.urgency === 'urgent' ? '<span class="tag urgent">⚡ Urgent</span>' : '';
+  const cats = c.tags.map(t => `<span class="tag">${c.category}</span>`).slice(0,1).join('');
+  const pct = Math.min(99, Math.round((c.votes / 400) * 100));
+  const avatars = Array.from({length: Math.min(5, Math.ceil(c.supporters/12))}, (_, i) =>
+    `<div class="avatar" style="background:hsl(${i*47+10},60%,25%)">👤</div>`
+  ).join('');
+  const commentItems = c.commentsList.map(cm =>
+    `<div class="comment">
+      <div class="comment-avatar">👤</div>
+      <div class="comment-text"><strong>Anonymous ·</strong> ${cm}</div>
+    </div>`
+  ).join('');
+  return `
+  <div class="complaint-card" id="card-${c.id}" onclick="toggleCard(${c.id})">
+    <div class="card-img-placeholder">${c.emoji}</div>
+    <div class="card-body">
+      <div class="card-top">
+        <div class="card-tags">${cats}${urgTag}</div>
+        <div class="card-time">${c.time}</div>
+      </div>
+      <div class="card-title">${c.title}</div>
+      <div class="card-desc">${c.desc.slice(0,160)}…</div>
+      <div class="card-location">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        ${c.location}
+        <a href="https://www.openstreetmap.org/?mlat=${c.lat}&mlon=${c.lng}&zoom=16" target="_blank" onclick="event.stopPropagation()" style="margin-left:auto;font-size:0.7rem;color:var(--accent);text-decoration:none;">View on Map →</a>
+      </div>
+      <div class="similar-count">
+        <div class="avatar-stack">${avatars}</div>
+        <span>${c.supporters} other people reported the same issue</span>
+      </div>
+      <div class="opinion-bar-wrap">
+        <div class="opinion-bar-label"><span>Community Outrage Level</span><span>${pct}%</span></div>
+        <div class="opinion-bar"><div class="opinion-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="card-footer">
+        <button class="vote-btn ${c.voted?'voted':''}" id="vote-${c.id}" onclick="event.stopPropagation();vote(${c.id})">
+          🔺 <span class="vote-count" id="vc-${c.id}">${c.votes}</span> Support
+        </button>
+        <button class="comment-btn" onclick="event.stopPropagation();toggleCard(${c.id})">
+          💬 ${c.comments} Comments
+        </button>
+        <button class="share-btn" onclick="event.stopPropagation();shareComplaint(${c.id})">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="comments-section">
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">${c.comments} anonymous comments</div>
+      <div class="comment-input-wrap">
+        <textarea class="comment-input" placeholder="Add your experience anonymously…" rows="1" id="ci-${c.id}"></textarea>
+        <button class="comment-send" onclick="addComment(${c.id})">Send</button>
+      </div>
+      <div id="comments-${c.id}">${commentItems}</div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('card-'+id);
+  card.classList.toggle('expanded');
+}
+
+function vote(id) {
+  const c = complaints.find(x => x.id === id);
+  if (!c) return;
+  c.voted = !c.voted;
+  c.votes += c.voted ? 1 : -1;
+  const btn = document.getElementById('vote-'+id);
+  const vc = document.getElementById('vc-'+id);
+  btn.classList.toggle('voted', c.voted);
+  vc.textContent = c.votes;
+  if (c.voted) showToast('🔺 Support added anonymously!', false);
+}
+
+function addComment(id) {
+  const inp = document.getElementById('ci-'+id);
+  const val = inp.value.trim();
+  if (!val) return;
+  const container = document.getElementById('comments-'+id);
+  const div = document.createElement('div');
+  div.className = 'comment';
+  div.innerHTML = `<div class="comment-avatar">👤</div><div class="comment-text"><strong>You (Anonymous) ·</strong> ${val}</div>`;
+  container.prepend(div);
+  inp.value = '';
+  showToast('💬 Comment added anonymously', false);
+}
+
+function shareComplaint(id) {
+  if (navigator.share) {
+    navigator.share({ title: 'Anonymous Complaint', text: 'Check this complaint on VoiceUp', url: window.location.href });
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    showToast('🔗 Link copied!', false);
+  }
+}
+
+function filterCat(cat, el) {
+  activeFilter = cat;
+  document.querySelectorAll('.category-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  renderFeed();
+}
+
+function sortFeed(mode, el) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-tab').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  renderFeed();
+}
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+document.getElementById('modal').addEventListener('click', closeModal);
+
+function detectLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  const btn = document.querySelector('.detect-btn');
+  btn.textContent = '⏳ Detecting…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude, longitude } = pos.coords;
+    document.getElementById('f-loc').value = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+    btn.textContent = '✅ Detected';
+    setTimeout(() => btn.textContent = '📍 Detect', 2000);
+  }, () => {
+    document.getElementById('f-loc').value = 'Greater Noida, Uttar Pradesh';
+    btn.textContent = '📍 Detect';
+  });
+}
+
+function previewImg(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('img-preview');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitComplaint() {
+  const title = document.getElementById('f-title').value.trim();
+  const cat = document.getElementById('f-cat').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  const loc = document.getElementById('f-loc').value.trim();
+  const urgency = document.getElementById('f-urgency').value;
+  if (!title || !cat || !desc || !loc) {
+    alert('Please fill in all required fields.'); return;
+  }
+  const newComplaint = {
+    id: complaints.length + 1,
+    title, category: cat,
+    desc, location: loc,
+    lat: 28.4744, lng: 77.5030,
+    tags: [cat.toLowerCase().replace(/\s+&\s+/g, '-').split(' ')[0]],
+    votes: 1, comments: 0, supporters: 1,
+    time: 'Just now', urgency,
+    emoji: '📢', voted: false,
+    commentsList: []
+  };
+  complaints.unshift(newComplaint);
+  document.getElementById('total-complaints').textContent = (parseInt(document.getElementById('total-complaints').textContent.replace(/,/g,'')) + 1).toLocaleString();
+  closeModal();
+  renderFeed();
+  showToast('✓ Complaint filed anonymously. Your identity is protected.');
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-loc').value = '';
+  document.getElementById('img-preview').style.display = 'none';
+}
+
+function showToast(msg, positive=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = positive ? 'var(--green)' : 'var(--accent2)';
+  t.style.color = positive ? 'var(--green)' : 'var(--accent2)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+renderFeed();
+</script>
+</body>
+</html>
